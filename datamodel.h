@@ -1,3 +1,4 @@
+#include <memory>
 #include <unordered_map>
 
 // Product, Item, Cart
@@ -20,42 +21,42 @@ public:
 
 class Item {
     friend class Cart;
-    Product prod;
+    std::shared_ptr<Product> prod;
     int quantity;
     
 public:
     Item() {}
-    Item(Product p, int q) :prod{p}, quantity{q} {}
+    Item(std::shared_ptr<Product> p, int q) :prod{p}, quantity{q} {}
     
     int getItemPrice() {
-        return quantity * prod.p_price;
+        return quantity * prod->p_price;
     }
     
     std::string getItemInfo() {
-        return std::to_string(quantity) + " x " + prod.p_name + " Eu " + std::to_string(quantity*prod.p_price) + "\n";
+        return std::to_string(quantity) + " x " + prod->p_name + " Eu " + std::to_string(quantity * prod->p_price) + "\n";
     }
     
 };
 
 class Cart {
     // Collection
-    std::unordered_map<int,Item> items;
+    std::unordered_map<int,std::shared_ptr<Item>> items;
 public:
-    void addProduct(Product p) {
-        if (items.count(p.p_id) == 0) {
-            Item new_Item(p,1);
-            items[p.p_id] = new_Item;
+    void addProduct(std::shared_ptr<Product> p) {
+        if (items.count(p->p_id) == 0) {
+            std::shared_ptr<Item> new_Item = std::make_shared<Item>(p,1);
+            items[p->p_id] = new_Item;
         }
         else {
-            items[p.p_id].quantity += 1;
+            items[p->p_id]->quantity += 1;
         }
     }
     
     int getTotal() {
         int total{};
         
-        for (std::pair<int,Item> pair: items) {
-            total += pair.second.getItemPrice();
+        for (std::pair<int,std::shared_ptr<Item>> pr: items) {
+            total += pr.second->getItemPrice();
         }
         return total;
     }
@@ -68,9 +69,8 @@ public:
         std::string itemList{};
         int cart_total = getTotal();
         
-        for (std::pair<int,Item> pair: items) {
-            Item item = pair.second;
-            itemList.append(item.getItemInfo());
+        for (std::pair<int,std::shared_ptr<Item>> pr: items) {
+            itemList.append(pr.second->getItemInfo());
         }
         
         return itemList + "\n Total Amount : Eu " + std::to_string(cart_total) + "\n";
